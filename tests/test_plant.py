@@ -50,8 +50,6 @@ def _build_display(stage_idx: int, elapsed: int, subject: str) -> Panel:
     if till_next is not None:
         m, s = divmod(till_next, 60)
         plant_text.append(f"\n  next stage in {m}m {s:02d}s", style="dim")
-    else:
-        plant_text.append("\n  [bold green]Fully grown![/bold green]")
 
     plant_panel = Panel(plant_text, border_style="green", padding=(0, 1))
 

@@ -37,8 +37,8 @@ _STAGE_PARAMS = [
     (8, 15),   # 6 — full tree
 ]
 
-PANEL_WIDTH  = 36   # chars — matches the left panel width
-PANEL_HEIGHT = 20   # fixed so the panel doesn't jump when the tree grows
+PANEL_WIDTH  = 52   # chars — wide enough that later stages don't hit the edges
+PANEL_HEIGHT = 22   # fixed so the panel doesn't jump when the tree grows
 
 # ---------------------------------------------------------------------------
 # Module-level state (set once per session via init_plant)
