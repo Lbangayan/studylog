@@ -1,2 +1,5 @@
+from studylog.cli import app
+
+
 def main() -> None:
-    print("Hello from studylog!")
+    app()
