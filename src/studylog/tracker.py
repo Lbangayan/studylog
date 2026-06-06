@@ -169,7 +169,7 @@ class SessionTracker:
             info.append("  Blocking: ", style="dim")
             info.append(f"{blocked}\n", style="bold red")
 
-        info.append("\n  [dim]Press Ctrl+C to stop[/dim]")
+        info.append("\n  Press Ctrl+C to stop", style="dim")
         info_panel = Panel(info, border_style="blue", padding=(1, 2))
 
         # --- combine side by side ---
