@@ -6,11 +6,11 @@ readme = "README.md"
 authors = [
     { name = "Lbangayan", email = "141669722+Lbangayan@users.noreply.github.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = [
-    "pywin32>=312; sys_platform == 'win32'",
-    "rich>=15.0.0",
-    "typer>=0.26.7",
+    "pywin32; sys_platform == 'win32'",
+    "rich>=13.0.0",
+    "typer>=0.9.0",
 ]
 
 [project.scripts]
