@@ -14,7 +14,7 @@ from rich.table import Table
 from rich.text import Text
 
 from studylog import storage
-from studylog.plant import init_plant, render_plant, next_stage_in
+from studylog.plant import init_plant, render_plant, next_stage_in, get_stage
 
 console = Console()
 
@@ -91,6 +91,10 @@ class SessionTracker:
         self._lock = threading.Lock()
         self._last_app: str | None = None
         self._app_start: float = time.monotonic()
+        # plant panel is expensive to build (re-parses bonsai ANSI), so cache
+        # it and only rebuild when the growth stage actually changes
+        self._cached_stage: int | None = None
+        self._cached_plant_panel: Panel | None = None
 
     # ------------------------------------------------------------------
     # Background polling thread
@@ -138,24 +142,35 @@ class SessionTracker:
     # Live timer UI
     # ------------------------------------------------------------------
 
-    def _build_panel(self, elapsed: int) -> Panel:
-        subject = self.session["subject"]
-        duration_str = _format_duration(elapsed)
+    def _build_plant_panel(self, elapsed: int) -> Panel:
+        """Build the bonsai panel. Cached and only rebuilt when the stage changes.
 
-        # --- left side: plant ---
+        Only the static tree + stage label live here; the per-second countdown
+        lives in the info panel so this panel stays identical between stages.
+        """
+        stage = get_stage(elapsed)
+        if stage == self._cached_stage and self._cached_plant_panel is not None:
+            return self._cached_plant_panel
+
         plant_lines, plant_label = render_plant(elapsed)
-        till_next = next_stage_in(elapsed)
 
         plant_text = Text()
         for line in plant_lines:
             plant_text.append_text(line)
             plant_text.append("\n")
         plant_text.append(f"\n{plant_label}", style="dim italic")
-        if till_next is not None:
-            m, s = divmod(till_next, 60)
-            plant_text.append(f"\n  next stage in {m}m {s:02d}s", style="dim")
 
-        plant_panel = Panel(plant_text, border_style="green", padding=(0, 1))
+        panel = Panel(plant_text, border_style="green", padding=(0, 1))
+        self._cached_stage = stage
+        self._cached_plant_panel = panel
+        return panel
+
+    def _build_panel(self, elapsed: int) -> Panel:
+        subject = self.session["subject"]
+        duration_str = _format_duration(elapsed)
+
+        # --- left side: plant (cached between stage changes) ---
+        plant_panel = self._build_plant_panel(elapsed)
 
         # --- right side: timer info ---
         info = Text()
@@ -163,6 +178,12 @@ class SessionTracker:
         info.append(f"{subject}\n", style="bold cyan")
         info.append("  Time:     ", style="dim")
         info.append(f"{duration_str}\n", style="bold green")
+
+        till_next = next_stage_in(elapsed)
+        if till_next is not None:
+            m, s = divmod(till_next, 60)
+            info.append("  Next:     ", style="dim")
+            info.append(f"stage in {m}m {s:02d}s\n", style="green")
 
         if self.focus_block:
             blocked = ", ".join(self.focus_block)
@@ -192,10 +213,17 @@ class SessionTracker:
         poll_thread.start()
 
         try:
-            with Live(console=console, refresh_per_second=1) as live:
+            # auto_refresh=False so there is exactly one controlled redraw per
+            # tick (avoids a background refresh thread racing our updates);
+            # vertical_overflow="crop" keeps the rendered height constant.
+            with Live(
+                console=console,
+                auto_refresh=False,
+                vertical_overflow="crop",
+            ) as live:
                 while True:
                     elapsed = int(time.monotonic() - start_mono)
-                    live.update(self._build_panel(elapsed))
+                    live.update(self._build_panel(elapsed), refresh=True)
                     time.sleep(1)
         except KeyboardInterrupt:
             pass
