@@ -2,15 +2,37 @@
 
 A command-line tool for logging and tracking your study sessions. Start a session and
 get a live timer in your terminal while studylog quietly tracks which apps you spend
-time in — so at the end you can see exactly how focused you actually were.
+time in — so at the end you can see exactly how focused you actually were. A procedural
+bonsai tree grows in the timer panel as you study, getting more branches the longer you go.
+
+> **Note:** App tracking and the animated bonsai require Windows (`pywin32`). The timer,
+> history, and summary commands work on any platform.
 
 ## Installation
 
+**Install as a standalone command (recommended):**
+```bash
+uv tool install "git+https://github.com/Lbangayan/studylog.git"
+```
+After this, `studylog` works as a command from anywhere in your terminal.
+
+**Or clone and run locally:**
+```bash
+git clone https://github.com/Lbangayan/studylog.git
+cd studylog
+uv sync
+uv tool install .   # makes `studylog` available system-wide
+```
+
+To run without installing (from inside the cloned folder):
+```bash
+uv run studylog --help
+```
+
+**For use as a dependency in another project:**
 ```bash
 uv add "git+https://github.com/Lbangayan/studylog.git"
 ```
-
-> **Note:** App tracking uses `pywin32` and is only supported on Windows.
 
 ## Usage
 
@@ -20,18 +42,9 @@ uv add "git+https://github.com/Lbangayan/studylog.git"
 studylog start DSC190
 ```
 
-Displays a live timer in your terminal. Press **Ctrl+C** to end the session.
-When the session ends, your total time and a per-app usage breakdown are shown.
-
-```
-╭─ studylog ───────────────────────────────╮
-│                                          │
-│  Subject:  DSC190                        │
-│  Time:     00:23:45                      │
-│                                          │
-│  Press Ctrl+C to stop                    │
-╰──────────────────────────────────────────╯
-```
+Displays a live timer alongside a growing bonsai tree. The tree gains new branches
+at 5, 10, 20, 35, 50, and 70 minutes. Press **Ctrl+C** to end the session — your
+total time and a per-app usage breakdown are saved automatically.
 
 ### Start a session with focus mode
 
@@ -73,3 +86,8 @@ studylog stop
 
 If a session was left running (e.g. your terminal closed before Ctrl+C), this
 saves it with the current time as the end time.
+
+## Data
+
+Sessions are stored in `~/.studylog/sessions.json`. You can back this file up or
+delete it at any time.
