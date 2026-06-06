@@ -47,9 +47,6 @@ def start(
     session = storage.new_session(subject)
     storage.write_active(session)
 
-    from studylog.splash import show_splash
-    show_splash(subject)
-
     if blocked:
         console.print(f"[bold red]Focus mode on:[/bold red] {', '.join(blocked)}\n")
 

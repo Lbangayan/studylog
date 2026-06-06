@@ -14,7 +14,7 @@ from rich.table import Table
 from rich.text import Text
 
 from studylog import storage
-from studylog.plant import render_plant, next_stage_in
+from studylog.plant import init_plant, render_plant, next_stage_in
 
 console = Console()
 
@@ -182,6 +182,8 @@ class SessionTracker:
 
     def run(self) -> dict:
         """Block until Ctrl-C, then return the completed session dict."""
+        init_plant(self.session["subject"])
+
         start_mono = time.monotonic()
         start_dt = datetime.now()
 
