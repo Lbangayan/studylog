@@ -7,11 +7,14 @@ import threading
 from datetime import datetime
 
 from rich.console import Console
+from rich.columns import Columns
 from rich.live import Live
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 from studylog import storage
+from studylog.plant import render_plant, next_stage_in
 
 console = Console()
 
@@ -139,19 +142,39 @@ class SessionTracker:
         subject = self.session["subject"]
         duration_str = _format_duration(elapsed)
 
-        lines = Text()
-        lines.append("  Subject:  ", style="dim")
-        lines.append(f"{subject}\n", style="bold cyan")
-        lines.append("  Time:     ", style="dim")
-        lines.append(f"{duration_str}\n", style="bold green")
+        # --- left side: plant ---
+        plant_lines, plant_label = render_plant(elapsed)
+        till_next = next_stage_in(elapsed)
+
+        plant_text = Text()
+        for line in plant_lines:
+            plant_text.append_text(line)
+            plant_text.append("\n")
+        plant_text.append(f"\n{plant_label}", style="dim italic")
+        if till_next is not None:
+            m, s = divmod(till_next, 60)
+            plant_text.append(f"\n  next stage in {m}m {s:02d}s", style="dim")
+
+        plant_panel = Panel(plant_text, border_style="green", padding=(0, 1))
+
+        # --- right side: timer info ---
+        info = Text()
+        info.append("  Subject:  ", style="dim")
+        info.append(f"{subject}\n", style="bold cyan")
+        info.append("  Time:     ", style="dim")
+        info.append(f"{duration_str}\n", style="bold green")
 
         if self.focus_block:
             blocked = ", ".join(self.focus_block)
-            lines.append("  Blocking: ", style="dim")
-            lines.append(f"{blocked}\n", style="bold red")
+            info.append("  Blocking: ", style="dim")
+            info.append(f"{blocked}\n", style="bold red")
 
-        lines.append("\n  [dim]Press Ctrl+C to stop[/dim]")
-        return Panel(lines, title="[bold]studylog[/bold]", border_style="blue", padding=(1, 2))
+        info.append("\n  [dim]Press Ctrl+C to stop[/dim]")
+        info_panel = Panel(info, border_style="blue", padding=(1, 2))
+
+        # --- combine side by side ---
+        layout = Columns([plant_panel, info_panel], equal=False, expand=True)
+        return Panel(layout, title="[bold]studylog[/bold]", border_style="dim")
 
     # ------------------------------------------------------------------
     # Public API
